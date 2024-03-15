@@ -1,7 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { AppService } from './app.service';
+import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LinkModule } from './link/link.module';
+import { TicketModule } from './ticket/ticket.module';
+import { SeedingModule } from './seeding/seeding.module';
+import { SeedingService } from './seeding/seeding.service';
+import { Ticket } from './ticket/ticket.entity';
 
 @Module({
   imports: [
@@ -24,8 +31,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
     AuthModule,
+    TicketModule,
+    LinkModule,
+    SeedingModule,
+    TypeOrmModule.forFeature([Ticket]),
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [AppService, SeedingService],
 })
 export class AppModule {}
