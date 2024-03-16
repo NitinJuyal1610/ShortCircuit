@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
@@ -8,25 +7,16 @@ import { LinkModule } from './link/link.module';
 import { TicketModule } from './ticket/ticket.module';
 import { SeedingModule } from './seeding/seeding.module';
 import { SeedingService } from './seeding/seeding.service';
-import { Ticket } from './ticket/ticket.entity';
+import { Ticket } from './ticket/ticket.schema';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    TypeOrmModule.forRootAsync({
+    MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: Number(configService.get('DB_PORT')),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_NAME'),
-        autoLoadEntities: true,
-        synchronize: true,
-        ssl: {
-          rejectUnauthorized: false,
-        },
+        uri: configService.get<string>('MONGO_URI'),
       }),
       inject: [ConfigService],
     }),
@@ -34,7 +24,7 @@ import { Ticket } from './ticket/ticket.entity';
     TicketModule,
     LinkModule,
     SeedingModule,
-    TypeOrmModule.forFeature([Ticket]),
+    MongooseModule.forFeature([{ name: 'Ticket', schema: Ticket }]),
   ],
   controllers: [AppController],
   providers: [AppService, SeedingService],

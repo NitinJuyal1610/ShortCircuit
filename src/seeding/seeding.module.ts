@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Ticket } from 'src/ticket/ticket.entity';
+import { TicketSchema } from 'src/ticket/ticket.schema';
 import { SeedingService } from './seeding.service';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Ticket])],
+  imports: [
+    MongooseModule.forFeature([{ name: 'Ticket', schema: TicketSchema }]),
+  ],
   providers: [SeedingService],
   exports: [SeedingService],
 })

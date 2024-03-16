@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Ticket } from './ticket.entity';
-import { Repository } from 'typeorm';
+import { Ticket } from './ticket.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class TicketService {
-  constructor(
-    @InjectRepository(Ticket) private ticketRepository: Repository<Ticket>,
-  ) {}
+  constructor(@InjectModel(Ticket.name) private ticketModel: Model<Ticket>) {}
 
   createTicket(): number {
     return 1;

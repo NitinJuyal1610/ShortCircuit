@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Link } from './link.entity';
-import { User } from 'src/auth/user.entity';
+import { Link } from './link.schema';
+import { User } from 'src/auth/user.schema';
 import { CreateLinkDto } from './dto/create-link-dto';
-import { Ticket } from 'src/ticket/ticket.entity';
+
 import { TicketService } from 'src/ticket/ticket.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class LinkService {
   constructor(
-    @InjectRepository(Link) private linkRepository: Repository<Link>,
+    @InjectModel(Link.name) private linkModel: Model<Link>,
     private ticketService: TicketService,
   ) {}
 
