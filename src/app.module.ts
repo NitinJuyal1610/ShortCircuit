@@ -9,6 +9,7 @@ import { SeedingModule } from './seeding/seeding.module';
 import { TicketSchema } from './ticket/ticket.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { KafkaModule } from './kafka/kafka.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     SeedingModule,
     MongooseModule.forFeature([{ name: 'Ticket', schema: TicketSchema }]),
     AnalyticsModule,
+    KafkaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
