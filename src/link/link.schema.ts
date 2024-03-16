@@ -14,8 +14,8 @@ export class Link {
   @Prop({ required: true, type: String })
   url: string;
 
-  @Prop({ required: true, type: Number })
-  user_id: number;
+  @Prop({ required: true, type: String })
+  user_id: string;
 }
 
 export const LinkSchema = SchemaFactory.createForClass(Link);

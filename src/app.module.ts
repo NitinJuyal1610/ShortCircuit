@@ -6,9 +6,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LinkModule } from './link/link.module';
 import { TicketModule } from './ticket/ticket.module';
 import { SeedingModule } from './seeding/seeding.module';
-import { SeedingService } from './seeding/seeding.service';
-import { Ticket } from './ticket/ticket.schema';
+import { TicketSchema } from './ticket/ticket.schema';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -24,9 +24,10 @@ import { MongooseModule } from '@nestjs/mongoose';
     TicketModule,
     LinkModule,
     SeedingModule,
-    MongooseModule.forFeature([{ name: 'Ticket', schema: Ticket }]),
+    MongooseModule.forFeature([{ name: 'Ticket', schema: TicketSchema }]),
+    AnalyticsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, SeedingService],
+  providers: [AppService],
 })
 export class AppModule {}

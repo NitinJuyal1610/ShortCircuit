@@ -14,5 +14,6 @@ import { MongooseModule } from '@nestjs/mongoose';
   ],
   controllers: [LinkController],
   providers: [LinkService],
+  exports: [LinkService],
 })
 export class LinkModule {}
