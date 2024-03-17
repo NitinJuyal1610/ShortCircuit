@@ -26,11 +26,195 @@ export class AnalyticsService implements OnModuleInit {
     await this.producerService.produce(record);
   }
 
+  async getAnalytics(shortCode: string) {
+    /// to implement
+    const clicksByBrowser = await this.browserTop5(shortCode);
+    const clicksByDevice = await this.deviceTypeTop5(shortCode);
+    const timeAnalytics = await this.timeAnalytics(shortCode);
+
+    return {
+      clicksByDevice,
+      clicksByBrowser,
+      timeAnalytics,
+    };
+  }
+
+  async browserTop5(shortCode: string) {
+    try {
+      const analytics = await this.analyticsModel
+        .aggregate([
+          { $match: { shortCode } },
+          {
+            $group: {
+              _id: '$browser',
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+          { $limit: 5 },
+        ])
+        .exec();
+      return analytics;
+    } catch (error) {
+      console.error('Failed to get browser top 5:', error);
+      throw error;
+    }
+  }
+
+  async deviceTypeTop5(shortCode: string) {
+    try {
+      const analytics = await this.analyticsModel
+        .aggregate([
+          { $match: { shortCode } },
+          {
+            $group: {
+              _id: '$deviceType',
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+          { $limit: 5 },
+        ])
+        .exec();
+      return analytics;
+    } catch (error) {
+      console.error('Failed to get device type top 5:', error);
+      throw error;
+    }
+  }
+
+  async timeAnalytics(shortCode: string) {
+    try {
+      const analytics = await this.analyticsModel
+        .aggregate([
+          {
+            $match: {
+              shortCode,
+            },
+          },
+          {
+            $project: {
+              timestamp: 1,
+            },
+          },
+          {
+            $facet: {
+              mostActiveHours: [
+                {
+                  $group: {
+                    _id: {
+                      hour: {
+                        $hour: {
+                          date: '$timestamp',
+                          timezone: '+0530',
+                        },
+                      },
+                    },
+                    count: {
+                      $sum: 1,
+                    },
+                  },
+                },
+                {
+                  $sort: {
+                    count: -1,
+                  },
+                },
+                {
+                  $limit: 5,
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    hour: '$_id.hour',
+                    count: 1,
+                  },
+                },
+              ],
+              mostActiveWeekday: [
+                {
+                  $group: {
+                    _id: {
+                      $dayOfWeek: '$timestamp',
+                    },
+                    count: {
+                      $sum: 1,
+                    },
+                  },
+                },
+                {
+                  $sort: {
+                    count: -1,
+                  },
+                },
+                {
+                  $limit: 1,
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    dayOfWeek: '$_id',
+                    count: 1,
+                  },
+                },
+              ],
+              mostActiveMonth: [
+                {
+                  $group: {
+                    _id: {
+                      $month: '$timestamp',
+                    },
+                    count: {
+                      $sum: 1,
+                    },
+                  },
+                },
+                {
+                  $sort: {
+                    count: -1,
+                  },
+                },
+                {
+                  $limit: 1,
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    month: '$_id',
+                    count: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $project: {
+              shortCode: 1,
+              analytics: {
+                mostActiveHours: '$mostActiveHours',
+                mostActiveWeekday: {
+                  $arrayElemAt: ['$mostActiveWeekday', 0],
+                },
+                mostActiveMonth: {
+                  $arrayElemAt: ['$mostActiveMonth', 0],
+                },
+              },
+            },
+          },
+        ])
+        .exec();
+      return analytics;
+    } catch (error) {
+      console.error('Failed to get time analytics:', error);
+      throw error;
+    }
+  }
+
   async onModuleInit() {
     await this.consumerService.consume(
       { topics: ['analytics'] },
       {
-        eachMessage: async ({ message }) => {
+        eachMessage: async ({ message, heartbeat }) => {
           const data = JSON.parse(message.value.toString());
           const timestamp = new Date();
           const userAgent = data.headers['user-agent'];
@@ -38,12 +222,19 @@ export class AnalyticsService implements OnModuleInit {
           const isMobile = /Mobile/i.test(userAgent);
           const deviceType = isMobile ? 'Mobile' : 'Desktop';
 
+          console.log({
+            shortCode: data.shortCode,
+            timestamp,
+            browser,
+            deviceType,
+          });
           await this.analyticsModel.create({
             shortCode: data.shortCode,
             timestamp,
             browser,
             deviceType,
           });
+          await heartbeat();
         },
       },
     );

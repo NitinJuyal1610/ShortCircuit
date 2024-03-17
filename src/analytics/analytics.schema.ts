@@ -6,7 +6,7 @@ export type AnalyticsDocument = HydratedDocument<Analytics>;
 
 @Schema()
 export class Analytics {
-  @Prop({ required: true, type: String })
+  @Prop({ required: true, type: String, index: true })
   shortCode: string;
 
   @Prop({ required: true, type: Date })
