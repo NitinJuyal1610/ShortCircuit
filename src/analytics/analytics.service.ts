@@ -32,11 +32,36 @@ export class AnalyticsService implements OnModuleInit {
     const clicksByDevice = await this.deviceTypeTop5(shortCode);
     const timeAnalytics = await this.timeAnalytics(shortCode);
 
+    const refererTop5 = await this.refererTop5(shortCode);
+
     return {
       clicksByDevice,
       clicksByBrowser,
       timeAnalytics,
+      refererTop5,
     };
+  }
+
+  async refererTop5(shortCode: string) {
+    try {
+      const analytics = await this.analyticsModel
+        .aggregate([
+          { $match: { shortCode } },
+          {
+            $group: {
+              _id: '$referer',
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+          { $limit: 5 },
+        ])
+        .exec();
+      return analytics;
+    } catch (error) {
+      console.error('Failed to get referrer top 5:', error);
+      throw error;
+    }
   }
 
   async browserTop5(shortCode: string) {
@@ -229,18 +254,21 @@ export class AnalyticsService implements OnModuleInit {
           const browser = userAgent.split('/')[0];
           const isMobile = /Mobile/i.test(userAgent);
           const deviceType = isMobile ? 'Mobile' : 'Desktop';
+          const referer = data.headers['referer'] || 'direct';
 
           console.log({
             shortCode: data.shortCode,
             timestamp,
             browser,
             deviceType,
+            referer,
           });
           await this.analyticsModel.create({
             shortCode: data.shortCode,
             timestamp,
             browser,
             deviceType,
+            referer,
           });
           await heartbeat();
         },

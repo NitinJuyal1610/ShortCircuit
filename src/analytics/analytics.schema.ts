@@ -17,6 +17,9 @@ export class Analytics {
 
   @Prop({ required: true, type: String })
   deviceType: string;
+
+  @Prop({ required: true, type: String })
+  referer: string;
 }
 
 export const AnalyticsSchema = SchemaFactory.createForClass(Analytics);

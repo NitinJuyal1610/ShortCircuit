@@ -32,6 +32,7 @@ export class AnalyticsController {
     @Req() req: Request,
   ): Promise<HttpRedirectResponse> {
     // kafka
+
     await this.analyticsService.sendAnalytics(shortCode, req);
 
     //redirect
@@ -57,7 +58,6 @@ export class AnalyticsController {
       await this.cacheManager.get(`${shortCode}-analytics`);
 
     if (cached) {
-      console.log(cached);
       if (cached.owner === user_id) {
         return cached.analytics;
       }
@@ -65,7 +65,7 @@ export class AnalyticsController {
     }
 
     const owner = await this.linkService.getOwner(shortCode);
-    console.log(owner, user_id);
+
     if (owner !== user_id) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
