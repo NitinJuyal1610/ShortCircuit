@@ -45,6 +45,14 @@ export class LinkService {
     return result;
   }
 
+  async getOwner(shortCode: string): Promise<string> {
+    const link = await this.linkModel.findOne({
+      short_code: shortCode,
+    });
+
+    return link.user_id;
+  }
+
   async createLink(
     user: UserDocument,
     createLinkDto: CreateLinkDto,

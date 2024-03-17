@@ -1,7 +1,9 @@
 import {
   Controller,
   Get,
+  HttpException,
   HttpRedirectResponse,
+  HttpStatus,
   Inject,
   Param,
   Redirect,
@@ -12,6 +14,8 @@ import { LinkService } from 'src/link/link.service';
 import { AnalyticsService } from './analytics.service';
 import { AuthGuard } from '@nestjs/passport';
 import { CACHE_MANAGER, CacheStore } from '@nestjs/cache-manager';
+import { GetUser } from 'src/auth/get-user.decorator';
+import { UserDocument } from 'src/auth/user.schema';
 
 @Controller()
 export class AnalyticsController {
@@ -43,20 +47,37 @@ export class AnalyticsController {
 
   @UseGuards(AuthGuard())
   @Get(':shortCode/analytics')
-  async getAnalytics(@Param('shortCode') shortCode: string) {
+  async getAnalytics(
+    @Param('shortCode') shortCode: string,
+    @GetUser() user: UserDocument,
+  ) {
+    const user_id = user._id.toString();
     //redirect
-    const cached: string = await this.cacheManager.get(
-      `${shortCode}-analytics`,
-    );
+    const cached: { analytics: any; owner: string } =
+      await this.cacheManager.get(`${shortCode}-analytics`);
 
     if (cached) {
-      return cached;
+      console.log(cached);
+      if (cached.owner === user_id) {
+        return cached.analytics;
+      }
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
 
+    const owner = await this.linkService.getOwner(shortCode);
+    console.log(owner, user_id);
+    if (owner !== user_id) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
     const analytics = await this.analyticsService.getAnalytics(shortCode);
-    await this.cacheManager.set(`${shortCode}-analytics`, analytics, {
-      ttl: 60,
-    });
+
+    await this.cacheManager.set(
+      `${shortCode}-analytics`,
+      { analytics: analytics, owner: owner },
+      {
+        ttl: 60,
+      },
+    );
 
     return analytics;
   }
