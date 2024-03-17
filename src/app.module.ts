@@ -12,6 +12,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { KafkaModule } from './kafka/kafka.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-redis-store';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -37,6 +38,8 @@ import * as redisStore from 'cache-manager-redis-store';
       }),
       inject: [ConfigService],
     }),
+
+    ScheduleModule.forRoot(),
     AuthModule,
     TicketModule,
     LinkModule,

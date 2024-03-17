@@ -16,6 +16,16 @@ export class Link {
 
   @Prop({ required: true, type: String, index: true })
   user_id: string;
+
+  @Prop({
+    type: Date,
+    default: () => {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      return expiryDate;
+    },
+  })
+  expiry_date: Date;
 }
 
 export const LinkSchema = SchemaFactory.createForClass(Link);

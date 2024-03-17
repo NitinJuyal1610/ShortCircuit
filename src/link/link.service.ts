@@ -6,6 +6,7 @@ import { TicketService } from 'src/ticket/ticket.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
 import { encodeMapping } from 'src/constants/encodeMapping';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class LinkService {
@@ -47,19 +48,23 @@ export class LinkService {
   async createLink(
     user: UserDocument,
     createLinkDto: CreateLinkDto,
-  ): Promise<string> {
-    const { url } = createLinkDto;
+    host: string,
+  ): Promise<{ shortUrl: string }> {
+    const { url, expiryInDays } = createLinkDto;
 
     try {
       console.log('creating token');
       const value = await this.ticketService.createTicket();
 
-      console.log(value);
       //encode the value
       const short_code = this.encode(value);
-      console.log(short_code);
-      await this.linkModel.create({ user_id: user._id, url, short_code });
-      return short_code;
+      const params: any = { user_id: user._id, url, short_code };
+      if (expiryInDays && expiryInDays > 0) {
+        params.expiry_date = new Date();
+        params.expiry_date.setDate(params.expiry_date.getDate() + expiryInDays);
+      }
+      await this.linkModel.create(params);
+      return { shortUrl: host + '/' + short_code };
     } catch (error) {
       throw error;
     }
@@ -73,8 +78,22 @@ export class LinkService {
       if (decimal) {
         short_url += encodeMapping[pair];
       }
-      decimal >>= 6;
+      decimal >>>= 6;
     }
     return short_url;
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_1AM)
+  async expireLink() {
+    try {
+      //delete
+      await this.linkModel.deleteMany({
+        expiry_date: {
+          $lt: new Date(),
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
