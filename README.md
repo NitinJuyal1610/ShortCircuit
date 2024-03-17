@@ -1,73 +1,45 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+## URL Shortener Service with Analytics - v1.0.0
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+### Features
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- **Short URL Generation:** Creates unique short URLs using custom encoding to prevent collisions.
+- **Pseudo-Random Shortcodes:** Employs a range-based ticket generation system for randomness in short code creation.
+- **Non-Blocking Redirection & Async Stats:** Achieves smooth user experience with non-blocking redirection and asynchronous stat generation.
+- **Fast Analytics:** Provides quick access to total clicks, top browsers, device types, active hours, weekdays, and months.
+- **Optional Expiry Config & Auto-Deletion:** Allows setting expiry for URLs and schedules automatic deletion of expired entries.
 
-## Description
+### Performance
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Redis Caching:** Improves response times for frequently accessed data like analytics, original URLs, and recently created short URLs.
+- **Kafka Asynchronous Processing:** Enables efficient handling of high traffic through asynchronous processing of analytics data.
+- **MongoDB Indexing:** Optimizes read performance by utilizing indexes on frequently queried fields.
+- **MongoDB Read Efficiency:** Leverages MongoDB's strengths for efficient data retrieval.
 
-## Installation
+### System Flow
 
-```bash
-$ npm install
-```
+1. **Ticket Generation:** A `TicketCollection` is seeded with large ranges that are valid for one year, allowing for 100 million requests per month.
+2. **User Management:** Users register, log in, and access functionalities through secure JWT authentication.
+3. **Short URL Creation:** Users create short URLs for long ones, optionally setting expiration dates. Short URLs are unique for each long URL.
+4. **Link Service Communication:** The Link Service interacts with the Ticket Service to obtain a unique integer from a range and atomically increments it (Mongodb Transactions).
+5. **Shortcode Encoding:** The Link Service encodes the integer using custom encoding to create the final short URL.
+6. **Redirection:** Users visiting a short URL are redirected to the original URL.
+7. **Asynchronous Data Processing:** Information about the visit is published to a Kafka queue.
+8. **Analytics Generation:** An Analytics Service subscribes to the Kafka queue and stores relevant data in MongoDB.
+9. **Analytics Retrieval:** Authorized users can access analytics via various MongoDB aggregation queries.
+10. **Scheduled Deletion:** A cron job runs daily at 1AM to delete expired URLs.
 
-## Running the app
+### Environment Variables
 
-```bash
-# development
-$ npm run start
+- `JWT_SECRET`: Secret key used for JWT authentication.
+- `MONGO_URI`: Connection string for your MongoDB database.
+- `REDIS_HOST`: Hostname or IP address of your Redis server.
+- `REDIS_PORT`: Port number of your Redis server.
+- `REDIS_USERNAME`: Username for your Redis server.
+- `REDIS_PASSWORD`: Password for your Redis server.
 
-# watch mode
-$ npm run start:dev
+### Running Locally
 
-# production mode
-$ npm run start:prod
-```
-
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+1. Clone the repository.
+2. Install dependencies: `npm install`
+3. Start the local Kafka service: `docker-compose -f docker-compose-kafka.yml up` (if using docker)
+4. Start the application: `npm run start:dev`

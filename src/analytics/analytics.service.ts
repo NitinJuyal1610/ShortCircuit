@@ -99,6 +99,11 @@ export class AnalyticsService implements OnModuleInit {
           },
           {
             $facet: {
+              totalClicks: [
+                {
+                  $count: 'count',
+                },
+              ],
               mostActiveHours: [
                 {
                   $group: {
@@ -191,6 +196,9 @@ export class AnalyticsService implements OnModuleInit {
             $project: {
               shortCode: 1,
               analytics: {
+                totalClicks: {
+                  $arrayElemAt: ['$totalClicks.count', 0],
+                },
                 mostActiveHours: '$mostActiveHours',
                 mostActiveWeekday: {
                   $arrayElemAt: ['$mostActiveWeekday', 0],
